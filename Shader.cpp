@@ -50,7 +50,7 @@ Shader::Shader(const char* vertexPath, const char* fragPath)
     glGetShaderiv(vShader, GL_COMPILE_STATUS, &success);
     if (!success)
     {
-        glGetProgramInfoLog(vShader, 512, NULL, infoLog);
+        glGetShaderInfoLog(vShader, 512, NULL, infoLog);
         std::cout << "Error: vertex shader compilation failed:\n" << infoLog << std::endl;
     }
 
@@ -61,7 +61,7 @@ Shader::Shader(const char* vertexPath, const char* fragPath)
     glGetShaderiv(fShader, GL_COMPILE_STATUS, &success);
     if (!success)
     {
-        glGetProgramInfoLog(fShader, 512, NULL, infoLog);
+        glGetShaderInfoLog(fShader, 512, NULL, infoLog);
         std::cout << "Error: fragment shader compilation failed:\n" << infoLog << std::endl;
     }
 
