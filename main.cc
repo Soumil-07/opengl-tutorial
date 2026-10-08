@@ -1,7 +1,10 @@
+#include <cmath>
 #include <cstddef>
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include "Shader.h"
 
 void processInput(GLFWwindow *window)
 {
@@ -41,49 +44,14 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);  
 
 
-    // this is the simplest possible vertex shader, it simply takes existing coordinates in
-    // normalized device coordinates (NDC) and returns them again 
-    const char *vertexShaderSource = "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "void main()\n"
-        "{\n"
-        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}\0";
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-
-    // compile our vertex shader!
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    // simple fragment shader always returns this orange-y color 
-    const char *fragmentShaderSource = "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-        "}\0";
-    unsigned int fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    // link the vertex and fragment shader into a shader program
-    unsigned int shaderProgram;
-    shaderProgram = glCreateProgram();
-
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    Shader triangleShader("./triangle.vs", "./triangle.fs");
 
     // all z coordinates are 0, this makes our triangle a 2D triangle
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f
+        // positions            colors!j
+        -0.5f, 0.5f, 0.0f,     1.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.0f,      0.0f, 1.0f, 0.0f,
+        0.0f, -0.5f, 0.0f,       0.0f, 0.0f, 1.0f,
     };
 
     // vertex buffer 
@@ -96,9 +64,14 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // data is written once and read many times
     // at this point, our vertex buffer is in GPU memory! :)
 
+    // position attributes
     //                   loc num  type    requires normalization?       stride          offset to first element
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,                 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,                 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);  
+    // color attributes
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,                 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
     glBindVertexArray(0); 
 
@@ -111,7 +84,12 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shaderProgram); // now every render call uses our created shader program
+        float timeValue = glfwGetTime();
+        float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+
+        triangleShader.use();
+
+
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
