@@ -4,7 +4,9 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <xlocale/_wchar.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "Shader.h"
 #include "include/stb_img.h"
@@ -82,12 +84,9 @@ int main()
     //                   loc num  type    requires normalization?       stride          offset to first element
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,                 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);  
-    // color attributes
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,                 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
     // texture attributes 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,                 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,                 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
     glBindVertexArray(0); 
@@ -158,8 +157,14 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        float timeValue = glfwGetTime();
-        float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+        // our GLM based matrix transformation
+        glm::mat4 trans(1.0f);
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f)); // rotate around the Z-axis
+        float scaleFactor = sin(0.5f * (float) glfwGetTime());
+        trans = glm::scale(trans, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+
+        unsigned int transformLoc = glGetUniformLocation(triangleShader.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
