@@ -9,14 +9,35 @@
 
 #include "GlfwWrapper.h"
 #include "Shader.h"
-#include "glm/detail/func_geometric.hpp"
 #include "glm/detail/func_trigonometric.hpp"
+#include "glm/detail/type_vec3.hpp"
 #include "include/stb_img.h"
+
+glm::vec3 cameraPos, cameraFront, cameraUp;
+
+float deltaTime = 0.f;
+float lastFrame = 0.f;
+
+float fov = 45.0;
 
 void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    const float cameraSpeed = 2.5f * deltaTime;
+    glm::vec3 right = glm::normalize(glm::cross(cameraFront, cameraUp));
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos += cameraSpeed * cameraFront;
+    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * cameraFront;
+    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += cameraSpeed * right;
+    else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * right;
+    else if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
+        cameraPos = glm::vec3(0.f, 0.f, 3.f);
 }
 
 int main()
@@ -170,16 +191,22 @@ int main()
     triangleShader.setInt("texture2", 1);
 
     // Camera handling
-    glm::vec3 cameraPos(0.f, 0.f, 3.f);
-    glm::vec3 cameraTarget(0.f, 0.f, 0.f);
-    glm::vec3 cameraDirn = glm::normalize(cameraPos - cameraTarget);
-
-    glm::vec3 up(0.f, 1.f, 0.f);
-    glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirn));
-    glm::vec3 cameraUp = glm::normalize(glm::cross(cameraDirn, cameraRight));
+    cameraPos = glm::vec3(0.f, 0.f, 3.f);
+    cameraFront = glm::vec3(0.f, 0.f, -1.f);
+    cameraUp = glm::vec3(0.f, 1.f, 0.f);
+    // glm::vec3 cameraTarget(0.f, 0.f, 0.f);
+    // glm::vec3 cameraDirn = glm::normalize(cameraPos - cameraTarget);
+    //
+    // glm::vec3 up(0.f, 1.f, 0.f);
+    // glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirn));
+    // glm::vec3 cameraUp = glm::normalize(glm::cross(cameraDirn, cameraRight));
 
     while(!glfwWindowShouldClose(wrapper.window))
     {
+        float currentTime = glfwGetTime();
+        deltaTime = currentTime - lastFrame;
+        lastFrame = currentTime;
+
         processInput(wrapper.window);
 
         // render
@@ -194,7 +221,7 @@ int main()
         float camX = sin(glfwGetTime()) * radius;
         float camZ = cos(glfwGetTime()) * radius;
         glm::mat4 view;
-        view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
