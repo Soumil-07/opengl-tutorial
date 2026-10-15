@@ -7,12 +7,15 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "GlfwWrapper.h"
+#include "Model.h"
 #include "Shader.h"
 #include "glm/detail/func_trigonometric.hpp"
 #include "glm/detail/type_vec3.hpp"
 #include "include/stb_img.h"
 
-glm::vec3 cameraPos, cameraFront, cameraUp;
+glm::vec3 cameraPos(0.f, 0.5f, 16.f);
+glm::vec3 cameraFront(0.f, 0.f, -1.f);
+glm::vec3 cameraUp(0.f, 1.f, 0.f);
 
 float deltaTime = 0.f;
 float lastFrame = 0.f;
@@ -49,87 +52,12 @@ int main()
     if (wrapper.setupWindow(800, 600) == -1)
         return -1;
 
-    Shader cubeShader("./object.vs", "./object.fs");
-    Shader lightsrcShader("./object.vs", "./light_src.fs");
+    // tell stb_img to flip textures on y axis 
+    stbi_set_flip_vertically_on_load(true);
 
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-    };
-
-    // vertex buffer 
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    // gen VA, gen VB, bind VA, bind buffers, setup attributes
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // data is written once and read many times
-    // at this point, our vertex buffer is in GPU memory! :)
-    
-    // position attributes
-    //                   loc num  type    requires normalization?       stride          offset to first element
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,                 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);  
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,                 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);  
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0); 
-    glBindVertexArray(0); 
-
-    // lighting VAO 
-    unsigned int lightVAO;
-    glGenVertexArrays(1, &lightVAO);
-    glBindVertexArray(lightVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // in the lighting shader, we only care about the vertex coords, not the tex coords
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glBindVertexArray(0);
-
-    // Camera handling
-    cameraPos = glm::vec3(0.f, 0.f, 6.f);
-    cameraFront = glm::vec3(0.f, 0.f, -1.f);
-    cameraUp = glm::vec3(0.f, 1.f, 0.f);
+    glEnable(GL_DEPTH_TEST);
+    Shader modelShader("./shaders/model.vs", "./shaders/model.fs");
+    Model backpackModel("./assets/backpack/backpack.obj");
 
     while(!glfwWindowShouldClose(wrapper.window))
     {
@@ -140,53 +68,25 @@ int main()
         processInput(wrapper.window);
 
         // render
-        glEnable(GL_DEPTH_TEST);
-        glClearColor(0.f, 0.f, 0.f, 1.f);
+        glClearColor(0.05f, 0.05f, 0.05f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        const float radius = 10.f;
-        float camX = sin(glfwGetTime()) * radius;
-        float camZ = cos(glfwGetTime()) * radius;
-        glm::mat4 view;
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        modelShader.use();
 
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-
-        cubeShader.use();
-        cubeShader.setVec3("objectColor", glm::vec3(1.f, 0.5f, 0.31f));
-        cubeShader.setVec3("lightColor", glm::vec3(1.f, 1.f, 1.f));
-        cubeShader.setVec3("lightPos", lightPos);
-        cubeShader.setVec3("viewPos", cameraPos);
-        glBindVertexArray(VAO);
+        glm::mat4 projection = glm::perspective(glm::radians(35.f), (float)800 / (float)600, 0.1f, 100.f);
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        modelShader.setMat4("projection", projection);
+        modelShader.setMat4("view", view);
 
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(30.f), glm::vec3(1.f, 0.5f, 0.f));  // tilt toward you
-
-        glm::mat4 mvp = projection * view * model;
-        unsigned int mvpLoc = glGetUniformLocation(cubeShader.ID, "mvp");
-        glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvp));
-
-        // also need to pass the model mat for diffuse lighting calculations in the frag shader
-        unsigned int modelLoc = glGetUniformLocation(cubeShader.ID, "model");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        // draw the light src 
-        lightsrcShader.use();
-        glBindVertexArray(lightVAO);
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.2f));
-
-        mvp = projection * view * model;
-        // TODO: make a setMatrix4f() function on Shader
-        mvpLoc = glGetUniformLocation(lightsrcShader.ID, "mvp");
-        glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvp));
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(45.f), glm::vec3(0.5f, 0.f, 0.f));
+        // model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+        modelShader.setMat4("model", model);
+        backpackModel.Draw(modelShader);
 
         glfwSwapBuffers(wrapper.window);
-        glfwPollEvents();    
+        glfwPollEvents();
     }
 
     glfwTerminate();

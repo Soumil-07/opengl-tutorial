@@ -15,7 +15,7 @@ void GlfwWrapper::init()
 
 int GlfwWrapper::setupWindow(int w, int h)
 {
-    this->window = glfwCreateWindow(w, h, "LearnOpenGL", NULL, NULL);
+    this->window = glfwCreateWindow(w, h, "OpenGL", NULL, NULL);
     if (this->window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
