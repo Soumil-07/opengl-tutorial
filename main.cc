@@ -156,8 +156,18 @@ int main()
         cubeShader.use();
         cubeShader.setVec3("objectColor", glm::vec3(1.f, 0.5f, 0.31f));
         cubeShader.setVec3("lightColor", glm::vec3(1.f, 1.f, 1.f));
-        cubeShader.setVec3("lightPos", lightPos);
         cubeShader.setVec3("viewPos", cameraPos);
+
+        // lighting material uniform 
+        cubeShader.setVec3("material.ambient", glm::vec3(1.f, 0.5f, 0.31f));
+        cubeShader.setVec3("material.diffuse", glm::vec3(1.f, 0.5f, 0.31f));
+        cubeShader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+        cubeShader.setFloat("material.shininess", 32.f);
+
+        cubeShader.setVec3("light.position", lightPos);
+        cubeShader.setVec3("light.ambient",  glm::vec3(0.2f, 0.2f, 0.2f));
+        cubeShader.setVec3("light.diffuse",  glm::vec3(0.5f, 0.5f, 0.5f)); // darken diffuse light a bit
+        cubeShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
         glBindVertexArray(VAO);
 
         glm::mat4 model = glm::mat4(1.0f);
